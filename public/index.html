@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chronos - Temps Restant</title>
+    <style>
+        .circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 0 auto 20px auto;
+            position: relative;
+            background: conic-gradient(red 0%, transparent 0%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .circle::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .chrono-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .chrono {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            width: 150px;
+            text-align: center;
+            font-family: sans-serif;
+        }
+
+        .chrono div.time {
+            font-size: 32px;
+            margin-top: 10px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2 style="text-align:center;">Chronomètres avec Temps Restant</h2>
+    <div class="chrono-container">
+        <div class="chrono" id="chrono1">
+            <div>Chrono 1</div>
+            <div class="time" id="time1">00:00</div>
+            <div class="adds" id="adds1">Ajouts : 0</div>
+            <button onclick="startChrono('timer1')">+45s</button>
+            <button id="undo1" style="display: none;" onclick="undoChrono('timer1')">Annuler</button>
+        </div>
+        <div class="chrono" id="chrono2">
+            <div>Chrono 2</div>
+            <div class="time" id="time2">00:00</div>
+            <div class="adds" id="adds2">Ajouts : 0</div>
+            <button onclick="startChrono('timer2')">+45s</button>
+            <button id="undo2" style="display: none;" onclick="undoChrono('timer2')">Annuler</button>
+        </div>
+        <div class="chrono" id="chrono3">
+            <div>Chrono 3</div>
+            <div class="time" id="time3">00:00</div>
+            <div class="adds" id="adds3">Ajouts : 0</div>
+            <button onclick="startChrono('timer3')">+45s</button>
+            <button id="undo3" style="display: none;" onclick="undoChrono('timer3')">Annuler</button>
+        </div>
+        <!-- Ajoute d'autres chronos ici -->
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function startChrono(timerId) {
+            fetch(`/start/${timerId}`);
+            const index = timerId.replace('timer', '');
+            const undoBtn = document.getElementById(`undo${index}`);
+            if (undoBtn) {
+                undoBtn.style.display = 'inline-block';
+                setTimeout(() => {
+                    undoBtn.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function undoChrono(timerId) {
+            fetch(`/undo/${timerId}`).then(() => {
+                const index = timerId.replace('timer', '');
+                const undoBtn = document.getElementById(`undo${index}`);
+                if (undoBtn) undoBtn.style.display = 'none';
+            });
+        }
+
+        // Affichage formaté (mm:ss)
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        socket.on('timeUpdate', ({ timerId, timeRemaining, addCount }) => {
+            const index = timerId.replace('timer', '');
+            const timeEl = document.getElementById(`time${index}`);
+            const addsEl = document.getElementById(`adds${index}`);
+
+            if (timeEl) timeEl.textContent = formatTime(timeRemaining);
+            if (addsEl) addsEl.textContent = `Ajouts : ${addCount}`;
+        });
+
+    </script>
+</body>
+
+</html>
