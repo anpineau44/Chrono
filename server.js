@@ -7,7 +7,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 let timers = {};
-const ADD_TIME = 45; // en secondes
+const ADD_TIME = 2700; // en secondes
 
 const startOrAddTime = (timerId) => {
     if (!timers[timerId]) {

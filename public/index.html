@@ -38,69 +38,96 @@
         }
 
         .chrono-container {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 20px;
             padding: 20px;
         }
 
         .chrono {
-            /* border: 1px solid #ccc;
-            border-radius: 10px; */
-            padding: 20px;
-            /* width: 150px; */
+            background: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 16px;
             text-align: center;
             font-family: sans-serif;
+            transition: transform 0.2s;
         }
 
-        .chrono div.time {
-            font-size: 32px;
-            margin-top: 10px;
+        .chrono:hover {
+            transform: scale(1.02);
         }
 
         button {
-            margin-top: 10px;
+            margin-top: 8px;
             padding: 8px 12px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .chrono-container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .circle {
+                width: 140px;
+                height: 140px;
+            }
+
+            .circle::after {
+                width: 120px;
+                height: 120px;
+            }
+
+            .circle .time {
+                font-size: 18px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
         }
     </style>
 </head>
 
 <body>
     <h2 style="text-align:center;">Chronomètres avec Temps Restant</h2>
-    <div class="chrono-container">
-        <div class="chrono" id="chrono1">
-            <div>Chrono 1</div>
-            <div class="circle" id="circle1">
-                <div class="time" id="time1">00:00</div>
-            </div>
-            <div class="adds" id="adds1">Ajouts : 0</div>
-            <button onclick="startChrono('timer1')">+45s</button>
-            <button id="undo1" style="display: none;" onclick="undoChrono('timer1')">Annuler</button>
-        </div>
-        <div class="chrono" id="chrono2">
-            <div>Chrono 2</div>
-            <div class="circle" id="circle2">
-                <div class="time" id="time2">00:00</div>
-            </div>
-            <div class="adds" id="adds2">Ajouts : 0</div>
-            <button onclick="startChrono('timer2')">+45s</button>
-            <button id="undo2" style="display: none;" onclick="undoChrono('timer2')">Annuler</button>
-        </div>
-        <div class="chrono" id="chrono3">
-            <div>Chrono 3</div>
-            <div class="circle" id="circle3">
-                <div class="time" id="time3">00:00</div>
-            </div>
-            <div class="adds" id="adds3">Ajouts : 0</div>
-            <button onclick="startChrono('timer3')">+45s</button>
-            <button id="undo3" style="display: none;" onclick="undoChrono('timer3')">Annuler</button>
-        </div>
-        <!-- Ajoute d'autres chronos ici -->
-    </div>
+    <div class="chrono-container" id="chronoContainer"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+
+        const prenoms = [
+            "Florian", "Jules", "Amaury", "Lenaelle", "Antoine",
+            "Quentin", "Emma", "Jay", "Meline"
+        ];
+        const container = document.getElementById('chronoContainer');
+
+        prenoms.forEach((prenom, i) => {
+            const index = i + 1;
+            container.innerHTML += `
+    <div class="chrono" id="chrono${index}">
+        <div>${prenom}</div>
+        <div class="circle" id="circle${index}">
+            <div class="time" id="time${index}">00:00</div>
+        </div>
+        <div class="adds" id="adds${index}">Ajouts : 0</div>
+        <button onclick="startChrono('timer${index}')">+45min</button>
+        <button id="undo${index}" style="display: none;" onclick="undoChrono('timer${index}')">Annuler</button>
+    </div>
+  `;
+        });
+
         const timerMaxValues = {}; // stocke la valeur max temporaire
 
         function startChrono(timerId) {
