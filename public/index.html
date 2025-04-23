@@ -3,18 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Chronos - Temps Restant</title>
     <style>
         .circle {
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            margin: 0 auto 20px auto;
+            margin: 10px auto;
             position: relative;
             background: conic-gradient(red 0%, transparent 0%);
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: background 0.3s linear;
         }
 
         .circle::after {
@@ -27,6 +30,13 @@
             z-index: 1;
         }
 
+        .circle .time {
+            position: relative;
+            z-index: 2;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
         .chrono-container {
             display: flex;
             flex-wrap: wrap;
@@ -35,10 +45,10 @@
         }
 
         .chrono {
-            border: 1px solid #ccc;
-            border-radius: 10px;
+            /* border: 1px solid #ccc;
+            border-radius: 10px; */
             padding: 20px;
-            width: 150px;
+            /* width: 150px; */
             text-align: center;
             font-family: sans-serif;
         }
@@ -60,21 +70,27 @@
     <div class="chrono-container">
         <div class="chrono" id="chrono1">
             <div>Chrono 1</div>
-            <div class="time" id="time1">00:00</div>
+            <div class="circle" id="circle1">
+                <div class="time" id="time1">00:00</div>
+            </div>
             <div class="adds" id="adds1">Ajouts : 0</div>
             <button onclick="startChrono('timer1')">+45s</button>
             <button id="undo1" style="display: none;" onclick="undoChrono('timer1')">Annuler</button>
         </div>
         <div class="chrono" id="chrono2">
             <div>Chrono 2</div>
-            <div class="time" id="time2">00:00</div>
+            <div class="circle" id="circle2">
+                <div class="time" id="time2">00:00</div>
+            </div>
             <div class="adds" id="adds2">Ajouts : 0</div>
             <button onclick="startChrono('timer2')">+45s</button>
             <button id="undo2" style="display: none;" onclick="undoChrono('timer2')">Annuler</button>
         </div>
         <div class="chrono" id="chrono3">
             <div>Chrono 3</div>
-            <div class="time" id="time3">00:00</div>
+            <div class="circle" id="circle3">
+                <div class="time" id="time3">00:00</div>
+            </div>
             <div class="adds" id="adds3">Ajouts : 0</div>
             <button onclick="startChrono('timer3')">+45s</button>
             <button id="undo3" style="display: none;" onclick="undoChrono('timer3')">Annuler</button>
@@ -85,6 +101,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+        const timerMaxValues = {}; // stocke la valeur max temporaire
 
         function startChrono(timerId) {
             fetch(`/start/${timerId}`);
@@ -115,11 +132,28 @@
 
         socket.on('timeUpdate', ({ timerId, timeRemaining, addCount }) => {
             const index = timerId.replace('timer', '');
+
+            // MAJ valeurs HTML
             const timeEl = document.getElementById(`time${index}`);
             const addsEl = document.getElementById(`adds${index}`);
+            const circle = document.getElementById(`circle${index}`);
 
             if (timeEl) timeEl.textContent = formatTime(timeRemaining);
             if (addsEl) addsEl.textContent = `Ajouts : ${addCount}`;
+
+            // Mise à jour du max pour garder une base de calcul
+            if (!timerMaxValues[timerId] || timeRemaining > timerMaxValues[timerId]) {
+                timerMaxValues[timerId] = timeRemaining;
+            }
+
+            // Calcul du pourcentage
+            const max = timerMaxValues[timerId];
+            const percentage = max === 0 ? 0 : (timeRemaining / max) * 100;
+            const degrees = (percentage / 100) * 360;
+
+            if (circle) {
+                circle.style.background = `conic-gradient(red ${degrees}deg, transparent ${degrees}deg)`;
+            }
         });
 
     </script>
